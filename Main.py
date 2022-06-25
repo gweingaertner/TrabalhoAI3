@@ -117,38 +117,33 @@ def nextGeneration(currentGen, eliteSize, mutationRate):
 
 def geneticAlgorithm(population, popSize, eliteSize, mutationRate, generations):
     pop = initialPopulation(popSize, population)
-    print("Initial distance: " + str(1 / rankRoutes(pop)[0][1]))
-
+    popi =  1 / rankRoutes(pop)[0][1]
     for i in range(0, generations):
         pop = nextGeneration(pop, eliteSize, mutationRate)
-
-    print("Final distance: " + str(1 / rankRoutes(pop)[0][1]))
     bestRouteIndex = rankRoutes(pop)[0][0]
     bestRoute = pop[bestRouteIndex]
+    for cityaa in bestRoute:
+        for citybb in cityList:
+            if citybb == cityaa:
+                BestRouteList.append(cityList.index(citybb)+1)
+    print("Numero de Cidades:"+str(len(cityList)))
+    print("População: "+ str(SizeOfPopulation_var))
+    print("Taxa de Mutação: "+str(Mutation_rate_var))
+    print("Melhor Custo: " + str(1/ rankRoutes(pop)[0][1] + popi))
+    print("Melhor Rota:", end=" ")
+    print(BestRouteList)
     return bestRoute
 
 
 cityList = []
+BestRouteList = []
+SizeOfPopulation_var = 20
+Mutation_rate_var = 0.05
+Generations_var = 10000
+BestParentsQtd_var = 10
 
-for i in range(0, 25):
-    cityList.append(City(x=int(random.random() * 200), y=int(random.random() * 200)))
+data = np.loadtxt('cidades.mat')
+for i in range(0, 20):
+    cityList.append(City(x=data[0][i], y=data[1][i]))
 
-geneticAlgorithm(population=cityList, popSize=100, eliteSize=20, mutationRate=0.01, generations=500)
-
-
-def geneticAlgorithmPlot(population, popSize, eliteSize, mutationRate, generations):
-    pop = initialPopulation(popSize, population)
-    progress = []
-    progress.append(1 / rankRoutes(pop)[0][1])
-
-    for i in range(0, generations):
-        pop = nextGeneration(pop, eliteSize, mutationRate)
-        progress.append(1 / rankRoutes(pop)[0][1])
-
-    plt.plot(progress)
-    plt.ylabel('Distance')
-    plt.xlabel('Generation')
-    plt.show()
-
-
-geneticAlgorithmPlot(population=cityList, popSize=100, eliteSize=20, mutationRate=0.01, generations=500)
+geneticAlgorithm(population=cityList, popSize=SizeOfPopulation_var, eliteSize=BestParentsQtd_var, mutationRate=Mutation_rate_var, generations=Generations_var)

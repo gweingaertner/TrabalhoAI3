@@ -3,7 +3,7 @@ import numpy as np
 import math as mat
 
 data = np.loadtxt('C:/Users/lksmi/Desktop/TrabalhoAlgoritmoGenetico/cidades.mat')
-x = data[0]
+XdaData = data[0]
 y = data[1]
 cidades = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
            11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
@@ -174,7 +174,7 @@ def calcularMatrixDistancia(matrix):
         linha.append(linha[0])
         line = []
         for ind in range(20):
-            xtemp = x[linha[ind]-1]
+            xtemp = XdaData[linha[ind] - 1]
             ytemp = y[linha[ind+1]-1]
             line.append(mat.sqrt(xtemp**2 + ytemp**2))
         matrixDistancia.append(line)
