@@ -141,12 +141,12 @@ def nextGeneration(currentGen, bestParent, mutationRate):  # EXECUTA TODA A MUTA
     return mutatedPop
 
 
-def geneticAlgorithm(population, populationSize, goodParents, mutationRate, generations):  # APLICA O ALGORITIMO GENETICO
-    pop = firstPopulation(populationSize, population)
-    for i in range(0, generations):
-        pop = nextGeneration(pop, goodParents, mutationRate)
-    bestRouteIndex = routesRank(pop)[0][0]
-    bestRoute = pop[bestRouteIndex]
+def geneticAlgorithmAplication(population, populationSize, goodParents, mutationRate, generations):  # APLICA O ALGORITIMO GENETICO
+    populatonInstance = firstPopulation(populationSize, population)
+    for generationsFor in range(0, generations):
+        populatonInstance = nextGeneration(populatonInstance, goodParents, mutationRate)
+    bestRouteIndex = routesRank(populatonInstance)[0][0]
+    bestRoute = populatonInstance[bestRouteIndex]
     for citycoordenates in bestRoute:
         for cityindex in cityList:
             if cityindex == citycoordenates:
@@ -155,7 +155,7 @@ def geneticAlgorithm(population, populationSize, goodParents, mutationRate, gene
     print("Numero de Cidades:" + str(len(cityList)))
     print("População: " + str(SizeOfPopulation_var))
     print("Taxa de Mutação: " + str(Mutation_rate_var))
-    print("Melhor Custo: " + str(1 / routesRank(pop)[0][1]))
+    print("Melhor Custo: " + str(1 / routesRank(populatonInstance)[0][1]))
     print("Melhor Rota:", end=" ")
     print(BestRouteList)
 
@@ -171,5 +171,5 @@ data = np.loadtxt('cidades.mat')  # Carrega O ARQUIVO .MAT
 for i in range(0, 20):
     cityList.append(Cityclass(x_vector=data[0][i], y_vector=data[1][i]))
 
-geneticAlgorithm(population=cityList, populationSize=SizeOfPopulation_var, goodParents=BestParentsQtd_var,
+geneticAlgorithmAplication(population=cityList, populationSize=SizeOfPopulation_var, goodParents=BestParentsQtd_var,
                  mutationRate=Mutation_rate_var, generations=Generations_var)  # EXECUTA O ALGORITIMO
