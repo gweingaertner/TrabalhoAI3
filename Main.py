@@ -1,134 +1,127 @@
 import numpy as np, random, operator, pandas as pd, matplotlib.pyplot as plt
 
-class Calculator: #CLASSE QUE CALCULA A MENOR DISTANCIA
+def createRoute(cityList):  # CRIA UMA ROTA ALEATORIA
+    route = random.sample(cityList, len(cityList))
+    return route
+
+def firstPopulation(popSize, cityfirstlist):  # GERA A POPULAÇÃO
+    population = []
+    for popRange in range(0, popSize):
+        population.append(createRoute(cityfirstlist))
+    return population
+
+
+def routesRank(pop):  # ESCOLHE AS MELHORES ROTAS E RANKEIA ELAS
+    calcRes = {}
+    for popLen in range(0, len(pop)):
+        calcRes[popLen] = Calculator(pop[popLen]).routeCalculator()
+    return sorted(calcRes.items(), key=operator.itemgetter(1), reverse=True)
+
+
+def select_parents(popRanked, bestParent):  # FUNÇÃO QUE SEPARA OS PARES
+    selectionResults = []
+    distanceFor = pd.DataFrame(np.array(popRanked), columns=["Index", "Distance"])
+    distanceFor['cum_sum'] = distanceFor.Distance.cumsum()
+    distanceFor['cum_perc'] = 100 * distanceFor.cum_sum / distanceFor.Distance.sum()
+
+    for bestParentRange in range(0, bestParent):
+        selectionResults.append(popRanked[bestParentRange][0])
+    for popBest in range(0, len(popRanked) - bestParent):
+        pick = 100 * random.random()
+        for popBest in range(0, len(popRanked)):
+            if pick <= distanceFor.iat[popBest, 3]:
+                selectionResults.append(popRanked[popBest][0])
+                break
+    return selectionResults
+
+
+class Calculator: #CLASSE QUE CALCULA A MENOR DISTANCIA (E INSTANCIA O OBJETO DISTANCIA)
     def __init__(self, route):
         self.route = route
         self.distance = 0
-        self.fitness = 0.0
+        self.bestDistance = 0.0
 
     def distanceRoute(self):
         if self.distance == 0:
             pathDistance = 0
-            for i in range(0, len(self.route)):
+            for routeFor in range(0, len(self.route)):
                 fromCity = self.route[i]
                 toCity = None
-                if i + 1 < len(self.route):
-                    toCity = self.route[i + 1]
-                else:
-                    toCity = self.route[0]
+                if routeFor + 1 < len(self.route) : toCity = self.route[routeFor + 1]
+                else: toCity = self.route[0]
                 pathDistance += fromCity.distance(toCity)
             self.distance = pathDistance
         return self.distance
 
     def routeCalculator(self):
-        if self.fitness == 0:
-            self.fitness = 1 / float(self.distanceRoute())
-        return self.fitness
+        if self.bestDistance == 0:
+            self.bestDistance = 1 / float(self.distanceRoute())
+        return self.bestDistance
 
-def createRoute(cityList):  # CRIA UMA ROTA ALEATORIA
-    route = random.sample(cityList, len(cityList))
-    return route
+
+def uniteCrossoverParents(population, data):  # FUNÇÃO QUE REUNE OS PARES ESCOLHIDOS
+    list = []
+    for dataFor in range(0, len(data)):
+        index = data[dataFor]
+        list.append(population[index])
+    return list
+
+
+def crossover(parent1, parent2):  # FUNÇÃO QUE FAZ GERAR DESCENDENTES (CROSSOVER)
+    Kid = []
+    Parent1 = []
+    Parent2 = []
+    gene1 = int(random.random() * len(parent1))
+    gene2 = int(random.random() * len(parent1))
+    startGene = min(gene1, gene2)
+    endGene = max(gene1, gene2)
+    for geneFor in range(startGene, endGene):
+        Parent1.append(parent1[geneFor])
+    Parent2 = [item for item in parent2 if item not in Parent1]
+    Kid = Parent1 + Parent2
+    return Kid
+
+
+def crossoverPopulation(crossoverData, bestParent):  # EXECUTA O CROSSOVER NA POPULAÇAO
+    Kids = []
+    length = len(crossoverData) - bestParent
+    sample = random.sample(crossoverData, len(crossoverData))
+
+    for bestParentFor in range(0, bestParent):
+        Kids.append(crossoverData[bestParentFor])
+
+    for lenghtFor in range(0, length):
+        child = crossover(sample[lenghtFor], sample[len(crossoverData) - lenghtFor - 1])
+        Kids.append(child)
+    return Kids
+
+
+def mutate(individual, mutationRate):  # EXECUTA A MUTAÇÃO
+    for switch in range(len(individual)):
+        if (random.random() < mutationRate):
+            swapped = int(random.random() * len(individual))
+
+            cityA = individual[switch]
+            cityB = individual[swapped]
+
+            individual[switch] = cityB
+            individual[swapped] = cityA
+    return individual
+
 
 class Cityclass: #CLASSE DOS OBJETOS CIDADES
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    def __init__(self, x_vector, y_vector):
+        self.x_vector = x_vector
+        self.y_vector = y_vector
 
     def distance(self, city):
-        Xdistance = abs(self.x - city.x)
-        Ydistance = abs(self.y - city.y)
+        Xdistance = abs(self.x_vector - city.x_vector)
+        Ydistance = abs(self.y_vector - city.y_vector)
         distance = np.sqrt((Xdistance ** 2) + (Ydistance ** 2))
         return distance
 
     def __repr__(self):
-        return "(" + str(self.x) + "," + str(self.y) + ")"
-
-
-def firstPopulation(popSize, cityList):  # GERA A POPULAÇÃO
-    population = []
-    for i in range(0, popSize):
-        population.append(createRoute(cityList))
-    return population
-
-
-def routesRank(population):  # ESCOLHE AS MELHORES ROTAS E RANKEIA ELAS
-    fitnessResults = {}
-    for i in range(0, len(population)):
-        fitnessResults[i] = Calculator(population[i]).routeCalculator()
-    return sorted(fitnessResults.items(), key=operator.itemgetter(1), reverse=True)
-
-
-def selection(popRanked, eliteSize):  # FUNÇÃO QUE SEPARA OS PARES
-    selectionResults = []
-    df = pd.DataFrame(np.array(popRanked), columns=["Index", "Fitness"])
-    df['cum_sum'] = df.Fitness.cumsum()
-    df['cum_perc'] = 100 * df.cum_sum / df.Fitness.sum()
-
-    for i in range(0, eliteSize):
-        selectionResults.append(popRanked[i][0])
-    for i in range(0, len(popRanked) - eliteSize):
-        pick = 100 * random.random()
-        for i in range(0, len(popRanked)):
-            if pick <= df.iat[i, 3]:
-                selectionResults.append(popRanked[i][0])
-                break
-    return selectionResults
-
-
-def matingPool(population, selectionResults):  # FUNÇÃO QUE REUNE OS PARES ESCOLHIDOS
-    matingpool = []
-    for i in range(0, len(selectionResults)):
-        index = selectionResults[i]
-        matingpool.append(population[index])
-    return matingpool
-
-
-def breed(parent1, parent2):  # FUNÇÃO QUE FAZ GERAR DESCENDENTES (CROSSOVER)
-    child = []
-    childP1 = []
-    childP2 = []
-
-    geneA = int(random.random() * len(parent1))
-    geneB = int(random.random() * len(parent1))
-
-    startGene = min(geneA, geneB)
-    endGene = max(geneA, geneB)
-
-    for i in range(startGene, endGene):
-        childP1.append(parent1[i])
-
-    childP2 = [item for item in parent2 if item not in childP1]
-
-    child = childP1 + childP2
-    return child
-
-
-def breedPopulation(matingpool, eliteSize):  # EXECUTA O CROSSOVER NA POPULAÇAO
-    children = []
-    length = len(matingpool) - eliteSize
-    pool = random.sample(matingpool, len(matingpool))
-
-    for i in range(0, eliteSize):
-        children.append(matingpool[i])
-
-    for i in range(0, length):
-        child = breed(pool[i], pool[len(matingpool) - i - 1])
-        children.append(child)
-    return children
-
-
-def mutate(individual, mutationRate):  # EXECUTA A MUTAÇÃO
-    for swapped in range(len(individual)):
-        if (random.random() < mutationRate):
-            swapWith = int(random.random() * len(individual))
-
-            city1 = individual[swapped]
-            city2 = individual[swapWith]
-
-            individual[swapped] = city2
-            individual[swapWith] = city1
-    return individual
-
+        return "(" + str(self.x_vector) + "," + str(self.y) + ")"
 
 def mutatePopulation(population, mutationRate):  # EXECUTA O METODO DA MUTAÇÃO EM TODA A POPULAÇÃO (ANTIGA E NOVA)
     mutatedPop = []
@@ -139,13 +132,13 @@ def mutatePopulation(population, mutationRate):  # EXECUTA O METODO DA MUTAÇÃO
     return mutatedPop
 
 
-def nextGeneration(currentGen, eliteSize, mutationRate):  # EXECUTA TODA A MUTAÇÃ0 NAS PROXIMAS GERAÇOES (DO LOOP)
-    popRanked = routesRank(currentGen)
-    selectionResults = selection(popRanked, eliteSize)
-    matingpool = matingPool(currentGen, selectionResults)
-    children = breedPopulation(matingpool, eliteSize)
-    nextGeneration = mutatePopulation(children, mutationRate)
-    return nextGeneration
+def nextGeneration(currentGen, bestParent, mutationRate):  # EXECUTA TODA A MUTAÇÃ0 NAS PROXIMAS GERAÇOES (DO LOOP)
+    popSorted = routesRank(currentGen)
+    selectionResults = select_parents(popSorted, bestParent)
+    uniteCrossoverParentsResult = uniteCrossoverParents(currentGen, selectionResults)
+    Kids = crossoverPopulation(uniteCrossoverParentsResult, bestParent)
+    mutatedPop = mutatePopulation(Kids, mutationRate)
+    return mutatedPop
 
 
 def geneticAlgorithm(population, populationSize, goodParents, mutationRate, generations):  # APLICA O ALGORITIMO GENETICO
@@ -176,7 +169,7 @@ BestParentsQtd_var = 10  # NUMEROS DE PAIS DE "ELITE" ESCOLHIDOS
 
 data = np.loadtxt('cidades.mat')  # Carrega O ARQUIVO .MAT
 for i in range(0, 20):
-    cityList.append(Cityclass(x=data[0][i], y=data[1][i]))
+    cityList.append(Cityclass(x_vector=data[0][i], y_vector=data[1][i]))
 
 geneticAlgorithm(population=cityList, populationSize=SizeOfPopulation_var, goodParents=BestParentsQtd_var,
                  mutationRate=Mutation_rate_var, generations=Generations_var)  # EXECUTA O ALGORITIMO
